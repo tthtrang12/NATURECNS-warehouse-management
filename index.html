@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Management System</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        main {
+            width: 80%;
+            max-width: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            box-sizing: border-box;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: calc(100% - 10px);
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>NATURE CNS - Warehouse Management System</h1>
+    <p>System Management: Han Soo Ah</p>
+</header>
+
+<main>
+    <div class="flex-row">
+        <label for="productId">Product ID:</label>
+        <input type="number" id="productId">
+        
+        <label for="brand">Brand:</label>
+        <input type="text" id="brand">
+        
+        <label for="productName">Product Name:</label>
+        <input type="text" id="productName">
+        
+        <label for="productImage">Product Image:</label>
+        <input type="file" id="productImage" accept="image/*">
+        
+        <label for="packing">Packing:</label>
+        <input type="text" id="packing">
+        
+        <label for="quantityDelivered">Quantity Delivered:</label>
+        <input type="number" id="quantityDelivered">
+        
+        <label for="quantityReceived">Quantity Received:</label>
+        <input type="number" id="quantityReceived">
+    </div>
+
+    <button onclick="addProduct()">Add Product</button>
+
+    <label for="removeProductId">Product ID to Remove:</label>
+    <input type="number" id="removeProductId">
+    
+    <button onclick="removeProduct()">Remove Product</button>
+
+    <h2 style="text-align: center;">Warehouse Inventory</h2>
+    
+    <div class="flex-row">
+        <label for="searchTerm">Search by Product Name or Brand:</label>
+        <input type="text" id="searchTerm">
+        <button onclick="searchProducts()">Search</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Packing</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody id="inventoryBody"></tbody>
+    </table>
+</main>
+
+<script>
+    var warehouse = [];
+
+    // Load saved data from local storage
+    function loadSavedData() {
+        var savedData = localStorage.getItem('warehouseData');
+        if (savedData) {
+            warehouse = JSON.parse(savedData);
+            displayInventory();
+        }
+    }
+
+    // Save data to local storage
+    function saveData() {
+        localStorage.setItem('warehouseData', JSON.stringify(warehouse));
+    }
+
+    function addProduct() {
+        var productId = parseInt(document.getElementById("productId").value);
+        var brand = document.getElementById("brand").value;
+        var productName = document.getElementById("productName").value;
+        var packing = document.getElementById("packing").value;
+        var quantityDelivered = parseInt(document.getElementById("quantityDelivered").value) || 0;
+        var quantityReceived = parseInt(document.getElementById("quantityReceived").value) || 0;
+        var productImageInput = document.getElementById("productImage");
+
+        if (!isNaN(productId) && brand && productName && productImageInput.files.length > 0) {
+            var productImageFile = productImageInput.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                var product = {
+                    id: productId,
+                    brand: brand,
+                    name: productName,
+                    image: e.target.result, // Store image as data URL
+                    packing: packing,
+                    quantity: quantityReceived - quantityDelivered
+                };
+
+                warehouse.push(product);
+                saveData();
+                displayInventory();
+            };
+
+            reader.readAsDataURL(productImageFile);
+        } else {
+            alert("Please enter valid product details and select an image.");
+        }
+    }
+
+    function removeProduct() {
+        var removeProductId = parseInt(document.getElementById("removeProductId").value);
+
+        if (!isNaN(removeProductId)) {
+            var index = warehouse.findIndex(product => product.id === removeProductId);
+
+            if (index !== -1) {
+                warehouse.splice(index, 1);
+                saveData();
+                displayInventory();
+            } else {
+                alert("Product not found.");
+            }
+        } else {
+            alert("Please enter a valid product ID to remove.");
+        }
+    }
+
+    function displayInventory() {
+        var inventoryBody = document.getElementById("inventoryBody");
+        inventoryBody.innerHTML = "";
+
+        warehouse.forEach(product => {
+            var row = document.createElement("tr");
+            row.innerHTML = `<td>${product.id}</td><td>${product.brand}</td><td><img src="${product.image}" alt="${product.name}" style="max-width: 100px;"></td><td>${product.name}</td><td>${product.packing}</td><td>${product.quantity}</td>`;
+            inventoryBody.appendChild(row);
+        });
+    }
+
+    function searchProducts() {
+        var searchTerm = document.getElementById("searchTerm").value.toLowerCase();
+        var filteredProducts = warehouse.filter(product => 
+            product.name.toLowerCase().includes(searchTerm) || product.brand.toLowerCase().includes(searchTerm)
+        );
+        displayFilteredProducts(filteredProducts);
+    }
+
+    function displayFilteredProducts(filteredProducts) {
+        var inventoryBody = document.getElementById("inventoryBody");
+        inventoryBody.innerHTML = "";
+
+        filteredProducts.forEach(product => {
+            var row = document.createElement("tr");
+            row.innerHTML = `<td>${product.id}</td><td>${product.brand}</td><td><img src="${product.image}" alt="${product.name}" style="max-width: 100px;"></td><td>${product.name}</td><td>${product.packing}</td><td>${product.quantity}</td>`;
+            inventoryBody.appendChild(row);
+        });
+    }
+
+    // Load saved data when the page loads
+    loadSavedData();
+</script>
+
+</body>
+</html>
